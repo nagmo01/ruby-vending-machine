@@ -8,13 +8,15 @@ class Suica
     @deposit
   end
 
+
   def charge=(deposit)
     if deposit > 100
-      @deposit = deposit
+      @deposit = @deposit + deposit
     else
-      puts "例外です"
+      raise "最低金額以下です"
     end
   end
+
 
   def deposit=(deposit)
     @deposit = deposit
@@ -24,10 +26,9 @@ end
 
 
 class Drink
-  def initialize(name, price, stock)
+  def initialize(name, price)
     @name = name
     @price = price
-    @stock = stock
   end
 
   def name
@@ -37,31 +38,24 @@ class Drink
   def price
     @price
   end
-
-  def stock
-    @stock
-  end
-
-  def stock=(stock)
-    @stock = stock
-  end
-
 end
 
 
 class Machine
 
   def initialize
-    drink1 = Drink.new("ペプシ", 150, 5)
-    drink2 = Drink.new("モンスター", 230, 5)
-    drink3 = Drink.new("いろはす", 120, 5)
+    @drinks = []
+    5.times do
+      @drinks.push(Drink.new('ペプシ',150))
+      @drinks.push(Drink.new('いろはす', 120))
+      @drinks.push(Drink.new('モンスター', 230))
+    end
+    @drinkList = {'ペプシ':150, 'いろはす': 120, 'モンスター': 230}
     @sales = 0
-    @drinks = [drink1, drink2, drink3]
-
   end
 
-  def drink
-    @drink
+  def drinks
+    @drinks
   end
 
   def sales
@@ -69,22 +63,23 @@ class Machine
   end
   
   def drinkList
+    a = 0
+    b = 0
+    c = 0
     @drinks.each do |drink|
-      p "#{drink.name},#{drink.stock}"
-    end
-  end
-
-
-  def onSale
-    list = []
-
-    @drinks.each do |drink|
-      if drink.stock > 0
-        list.push(drink.name)
+      case drink.name
+      when "ペプシ" then
+        a += 1
+      when "いろはす" then
+        b += 1
+      when "モンスター" then
+        c += 1
       end
     end
-    return list
+
+    puts "ペプシ:#{a}本、いろはす:#{b}本、モンスター:#{c}本"
   end
+
 
   def getDrink(name)
 
@@ -97,34 +92,39 @@ class Machine
 
   def buy(name,suica)
     drink = getDrink(name)
-    if onSale.include?(name) and suica.deposit > drink.price
-      drink.stock = drink.stock - 1
+    if suica.deposit > drink.price
+      @drinks.delete(drink)
       suica.deposit = suica.deposit - drink.price
       @sales += drink.price
     else
-      puts "例外"
+      raise "お金が足りません"
     end
   end
 
   def chargeDrink(name, stock)
-    @drinks.each do |drink|
-      if drink.name == name
-        drink.stock = drink.stock + stock
-      end
+    stock.times do
+      @drinks.push(Drink.new(name,@drinkList[name]))
     end
   end
+
+
 end
+
+
+
+#購入処理
 
 suica = Suica.new
 machine = Machine.new
-
+suica.charge = 200
 machine.drinkList
-machine.chargeDrink("ペプシ", 20)
+
+
 
 machine.buy("いろはす", suica)
-
+machine.chargeDrink("ペプシ",100)
+machine.buy("いろはす", suica)
 machine.buy("モンスター", suica)
-
 machine.drinkList
+puts suica.deposit
 puts machine.sales
-
